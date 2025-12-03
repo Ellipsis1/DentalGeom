@@ -13,25 +13,12 @@
 
             <div class="controls">
                 <input type="file" id="fileInput" accept=".stl" />
-
                 <button id="clearBtn" class="danger=btn">Clear All Meshes</button>
-
-                <div class="slider-control">
-                    <label for="opacitySlider">
-                        Opacity: <span id="opacityValue">100%</span>
-                    </label>
-                    <input
-                    type="range"
-                    id="opacitySlider"
-                    min="0"
-                    max="100"
-                    value="100"
-                    step="1"
-                    />
-                </div>
             </div>
 
             <div id="stats"></div>
+
+            <div id="meshList" class="mesh-list"></div>
 
             <div class="instructions">
                 <strong>Controls:</strong><br>
