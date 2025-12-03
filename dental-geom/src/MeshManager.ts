@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { STLLoader} from "three-stdlib";
-import { DentalMesh } from "./DentalMesh.ts";
+import { DentalMesh } from "./DentalMesh";
 
 export class MeshManager {
     private meshes: DentalMesh[] = []
@@ -8,6 +8,7 @@ export class MeshManager {
     private loader: STLLoader
     private meshListElement: HTMLElement
     private statsElement: HTMLElement
+    private onMeshLoadedCallback?: () => void
 
     //Color for all meshes - Grey
     private readonly defaultColor = 0x808080
@@ -21,6 +22,10 @@ export class MeshManager {
         this.meshListElement = meshListElement
         this.statsElement = statsElement
         this.loader = new STLLoader()
+    }
+
+    public setOnMeshLoaded(callback: () => void) {
+        this.onMeshLoadedCallback = callback
     }
 
     public async loadSTL(file: File): Promise<void>{
@@ -43,10 +48,10 @@ export class MeshManager {
                     this.updateStats()
                     this.addMeshControl(dentalMesh)
 
-                    console.log('STL loaded successfully:', file.name)
-                    console.log('Total meshes:', this.meshes.length)
-                    console.log('Vertices:', dentalMesh.getVertexCount())
-                    console.log('Triangles:', dentalMesh.getTriangleCount())
+                    //notify callback
+                    if (this.onMeshLoadedCallback) {
+                        this.onMeshLoadedCallback()
+                    }
 
                     resolve()
                 } catch (error) {
@@ -142,5 +147,15 @@ export class MeshManager {
 
     public getMeshCount(): number {
         return this.meshes.length
+    }
+
+    //calc bounding box for all meshes
+    public getBoundingBox(): THREE.Box3 {
+        const box = new THREE.Box3()
+        this.meshes.forEach(dentalMesh => {
+            const meshBox = new THREE.Box3().setFromObject(dentalMesh.mesh)
+            box.union(meshBox)
+        })
+        return box
     }
 }

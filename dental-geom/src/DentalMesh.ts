@@ -71,12 +71,9 @@ export class DentalMesh {
         controlDiv.className = 'mesh-control'
         controlDiv.id = this.id
 
-        const colorHex = this.getColorHex()
-
         controlDiv.innerHTML =
             `
             <div class ="mesh-header">
-                <span class="color-indicator" style="background: ${colorHex}"></span>
                 <span class="mesh-name" title="${this.filename}">${this.filename}</span>
                 <button class="remove-btn">x</button>
             </div>
@@ -96,7 +93,7 @@ export class DentalMesh {
             `
         //add event listeners
         const slider = controlDiv.querySelector('.mesh-opacity-slider') as HTMLInputElement
-        const opacityLabel = this.controlElement?.querySelector('.opacity-value') as HTMLSpanElement
+        const opacityLabel = controlDiv.querySelector('.opacity-value') as HTMLSpanElement
         const removeBtn = controlDiv.querySelector('.remove-btn') as HTMLButtonElement
 
         slider.addEventListener('input', (event) => {

@@ -16,6 +16,53 @@
                 <button id="clearBtn" class="danger=btn">Clear All Meshes</button>
             </div>
 
+            <!-- CrossSection controls -->
+            <div class="tool-section">
+                <h3>Cross-Section</h3>
+                <div class="toggle-control">
+                    <input type="checkbox" id="crossSectionToggle" />
+                    <label for="crossSectionToggle">Enable Cross-Section</label>
+                </div>
+
+                <button id="setPlaneBtn" class="small-btn" disabled>Set Plane with 2 Points</button>
+                <p id="crossSectionStatus" class="status-text"></p>
+
+                <div class="select-control">
+                    <label for="crossSectionAxis">Or use axis: </label>
+                    <select id="crossSectionAxis">
+                        <option value="x">X</option>
+                        <option value="y" selected>Y</option>
+                        <option value="z">Z</option>
+                    </select>
+                </div>
+
+                <div class="slider-control">
+                    <label>
+                        Position: <span id="crossSectionValue">0.0</span>
+                    </label>
+                    <input
+                        type="range"
+                        id="crossSectionSlider"
+                        min="-100"
+                        max="100"
+                        value="0"
+                        step="0.1"
+                        disabled
+                    />
+                </div>
+            </div>
+
+            <!-- Measurement tool controls -->
+            <div class="tool-section">
+                <h3>Measurement Tool</h3>
+                <div class="toggle-control">
+                    <input type="checkbox" id="measurementToggle" />
+                    <label for="measurementToggle">Enable Measurement</label>
+                </div>
+                <button id="clearMeasurementBtn" class="small-btn">Clear Measurements</button>
+                <p class="tool-hint">Click two points on the mesh to measure distance</p>
+            </div>
+
             <div id="stats"></div>
 
             <div id="meshList" class="mesh-list"></div>
@@ -25,7 +72,9 @@
                 • Left click + drag: Rotate<br>
                 • Right click + drag: Pan<br>
                 • Scroll: Zoom
+                <button id="centerCameraBtn" class="small-btn">Center Camera on Meshes</button>
             </div>
+
         </div>
         <script type="module" src="/src/main.ts"></script>
   </body>
