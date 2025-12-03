@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DentalGeom - 3D Dental Mesh Viewer</title>
+  </head>
+  <body>
+        <div id="ui">
+            <h1>DentalGeom</h1>
+            <p>3D Dental Mesh Viewer & Analysis Tool</p>
+
+            <div class="controls">
+                <input type="file" id="fileInput" accept=".stl" />
+
+                <button id="clearBtn" class="danger=btn">Clear All Meshes</button>
+
+                <div class="slider-control">
+                    <label for="opacitySlider">
+                        Opacity: <span id="opacityValue">100%</span>
+                    </label>
+                    <input
+                    type="range"
+                    id="opacitySlider"
+                    min="0"
+                    max="100"
+                    value="100"
+                    step="1"
+                    />
+                </div>
+            </div>
+
+            <div id="stats"></div>
+
+            <div class="instructions">
+                <strong>Controls:</strong><br>
+                • Left click + drag: Rotate<br>
+                • Right click + drag: Pan<br>
+                • Scroll: Zoom
+            </div>
+        </div>
+        <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
