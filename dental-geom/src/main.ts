@@ -44,13 +44,13 @@ const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5)
 directionalLight2.position.set(-10, -10, -10)
 scene.add(directionalLight2)
 
-//Grid Helper
-const gridHelper = new THREE.GridHelper(200,20,0x444444,0x222222)
-scene.add(gridHelper)
-
-//Axes Helper
-const axesHelper = new THREE.AxesHelper(20)
-scene.add(axesHelper)
+// //Grid Helper
+// const gridHelper = new THREE.GridHelper(200,20,0x444444,0x222222)
+// scene.add(gridHelper)
+//
+// //Axes Helper
+// const axesHelper = new THREE.AxesHelper(20)
+// scene.add(axesHelper)
 
 //Mesh Manager
 const meshListElement = document.getElementById('meshList')!

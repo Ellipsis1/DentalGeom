@@ -262,14 +262,14 @@ export class CrossSection {
             this.pipCamera.updateProjectionMatrix()
 
             // Position camera perpendicular to the plane, looking at the center
-            const cameraDistance = 1000
+            const cameraDistance = 100
             this.pipCamera.position.copy(this.plane.normal).multiplyScalar(cameraDistance).add(center)
             this.pipCamera.lookAt(center)
 
             // Orient camera up vector
             // Use a consistent up direction based on the plane normal
-            if (Math.abs(this.plane.normal.y) < 0.9) {
-                this.pipCamera.up.set(1, 0, 0)
+            if (Math.abs(this.plane.normal.y) < 1) {
+                this.pipCamera.up.set(-1, 0, 0)
             } else {
                 this.pipCamera.up.set(1, 0, 0)
             }
