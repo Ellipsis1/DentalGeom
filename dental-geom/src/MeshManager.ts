@@ -7,7 +7,6 @@ export class MeshManager {
     private scene: THREE.Scene
     private loader: STLLoader
     private meshListElement: HTMLElement
-    private statsElement: HTMLElement
     private onMeshLoadedCallback?: () => void
 
     //Color for all meshes - Grey
@@ -16,11 +15,9 @@ export class MeshManager {
     constructor(
         scene: THREE.Scene,
         meshListElement: HTMLElement,
-        statsElement: HTMLElement
     ) {
         this.scene = scene
         this.meshListElement = meshListElement
-        this.statsElement = statsElement
         this.loader = new STLLoader()
     }
 
@@ -45,7 +42,6 @@ export class MeshManager {
 
                     //update ui
                     this.meshes.push(dentalMesh)
-                    this.updateStats()
                     this.addMeshControl(dentalMesh)
 
                     //notify callback
@@ -70,11 +66,16 @@ export class MeshManager {
     private addMeshControl (dentalMesh: DentalMesh): void {
         const controlElement = dentalMesh.createControlElement(
             (value) => {
-                //opacity changed callback
+                // Callback 1: opacity changed
                 console.log(`${dentalMesh.filename} opacity: ${value}%`)
             },
+            (visible) => {
+                // Callback 2: visibility changed
+                console.log(`${dentalMesh.filename} visibility: ${visible}`)
+            },
             () => {
-                //remove callback
+                // Callback 3: remove mesh
+                console.log(`Removing ${dentalMesh.filename}`)
                 this.removeMesh(dentalMesh)
             }
         )
@@ -100,12 +101,8 @@ export class MeshManager {
         if (controlElement) {
             controlElement.remove()
         }
-
-        //update stats
-        this.updateStats()
-
-        console.log('Mesh removed, total meshes:', this.meshes.length)
     }
+
 
     public clearAll(): void {
         //remove all meshes
@@ -118,27 +115,7 @@ export class MeshManager {
         this.meshes = []
         this.meshListElement.innerHTML = ''
 
-        //update stats
-        this.updateStats()
-
         console.log('All meshes cleared.')
-    }
-
-    private updateStats(): void {
-        let totalVertices= 0
-        let totalTriangles = 0
-
-        this.meshes.forEach(dentalMesh => {
-            totalVertices += dentalMesh.getVertexCount()
-            totalTriangles += dentalMesh.getTriangleCount()
-        })
-
-        this.statsElement.innerHTML = `
-            <strong>Mesh Statistics:</strong><br>
-            Loaded Meshes: ${this.meshes.length}<br>
-            Total Vertices: ${totalVertices.toLocaleString()}<br>
-            Total Triangles: ${Math.floor(totalTriangles).toLocaleString()}
-        `
     }
 
     public getMeshes(): DentalMesh[] {

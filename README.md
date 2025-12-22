@@ -15,5 +15,6 @@ A 3D dental mesh viewer and crown restoration generator built with Three.js and 
 
 ## Getting Started
 bash <br />
-npm install <br />
+npm install <br /><br />
+cd dental-geom<br />
 npm run dev <br />

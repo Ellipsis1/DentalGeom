@@ -1,22 +1,26 @@
 import './style.css'
 import * as THREE from 'three'
-import {OrbitControls} from "three-stdlib";
-import {MeshManager} from "./MeshManager";
+import { OrbitControls } from "three-stdlib";
+import { MeshManager } from "./MeshManager";
 import { CrossSection } from "./CrossSection";
 import { MeasurementTool } from "./MeasurementTool";
 
 //Scene setup
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x2a2a2a)
+scene.background = new THREE.Color(0x4a4a7a)
 
 //Camera
-const camera = new THREE.PerspectiveCamera(
-    40,
-    window.innerWidth / window.innerHeight,
+const camera = new THREE.OrthographicCamera(
+    window.innerWidth / -2,
+    window.innerWidth / 2,
+    window.innerHeight / 2,
+    window.innerHeight / -2,
     0.1,
-    10000
+    1000
 )
-camera.position.set(50,50,100)
+
+camera.position.set(50, 50, 50)
+camera.lookAt(0, 0, 0)
 
 //Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -32,30 +36,33 @@ controls.dampingFactor = 0.05
 controls.target.set(0,0,0)
 controls.update()
 
-//Lighting
-const ambientLight = new THREE.AmbientLight(0xffffff,0.8)
+// Ambient light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
 scene.add(ambientLight)
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-directionalLight.position.set(10,10,10)
-scene.add(directionalLight)
+// Key light
+const keyLight = new THREE.DirectionalLight(0xffffff, 1.2)
+keyLight.position.set(50, 100, 50)
+keyLight.castShadow = false
+scene.add(keyLight)
 
-const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5)
-directionalLight2.position.set(-10, -10, -10)
-scene.add(directionalLight2)
+// Fill light
+const fillLight = new THREE.DirectionalLight(0xffffff, 0.6)
+fillLight.position.set(-50, 50, -50)
+scene.add(fillLight)
 
-// //Grid Helper
-// const gridHelper = new THREE.GridHelper(200,20,0x444444,0x222222)
-// scene.add(gridHelper)
-//
-// //Axes Helper
-// const axesHelper = new THREE.AxesHelper(20)
-// scene.add(axesHelper)
+// Rim light
+const rimLight = new THREE.DirectionalLight(0xffffff, 0.5)
+rimLight.position.set(0, 50, -100)
+scene.add(rimLight)
+
+// Hemisphere light
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.3)
+scene.add(hemiLight)
 
 //Mesh Manager
 const meshListElement = document.getElementById('meshList')!
-const statsElement = document.getElementById('stats')!
-const meshManager = new MeshManager(scene, meshListElement, statsElement)
+const meshManager = new MeshManager(scene, meshListElement)
 
 //CrossSection Tool
 const crossSection = new CrossSection(scene, camera, renderer.domElement)
@@ -66,7 +73,6 @@ const measurementTool = new MeasurementTool(scene, camera, renderer.domElement)
 // Camera centering function
 function centerCameraOnMeshes(): void {
     const boundingBox = meshManager.getBoundingBox()
-
     if (boundingBox.isEmpty()) return
 
     // Get center and size of bounding box
@@ -78,27 +84,18 @@ function centerCameraOnMeshes(): void {
 
     // Calculate the distance needed to fit the object in view
     const maxDim = Math.max(size.x, size.y, size.z)
-    const fov = camera.fov * (Math.PI / 180)
+    const fov = 400 * (Math.PI / 180)
     let cameraDistance = Math.abs(maxDim / Math.sin(fov / 2))
 
-    // Position camera
-    const direction = new THREE.Vector3()
-    camera.getWorldDirection(direction)
-
-    // Set camera position relative to center
-    camera.position.copy(center).add(direction.multiplyScalar(-cameraDistance))
-
-    camera.position.set(
-        center.x + cameraDistance * 0.5,
-        center.y - cameraDistance * 0.8,
-        center.z + cameraDistance * 0.5
-    )
-
+    // Set to front view (looking from above) as default
+    camera.position.set(center.x, center.y + cameraDistance, center.z)
+    camera.up.set(0, 0, -1)
     camera.lookAt(center)
 
-    // Update controls target
     controls.target.copy(center)
     controls.update()
+
+    console.log('Camera set to front view (default)')
 }
 
 // Set callback to center camera when mesh is loaded
@@ -106,13 +103,74 @@ meshManager.setOnMeshLoaded(() => {
     centerCameraOnMeshes()
 })
 
-// Center Camera button
-const centerCameraBtn = document.getElementById('centerCameraBtn')!
-centerCameraBtn.addEventListener('click', () => {
-    centerCameraOnMeshes()
+// ============ View Navigation (6-button grid) ============
+const viewButtons = document.querySelectorAll('.dir-btn')
+viewButtons.forEach(btn => {
+    btn.addEventListener('click', (event) => {
+        const target = event.currentTarget as HTMLElement
+        const view = target.getAttribute('data-view')
+        if (view) {
+            setCameraView(view)
+        }
+    })
 })
 
-//file input handler
+function setCameraView(view: string): void {
+    const bbox = meshManager.getBoundingBox()
+    if (bbox.isEmpty()) {
+        console.warn('No meshes loaded')
+        return
+    }
+
+    const center = new THREE.Vector3()
+    bbox.getCenter(center)
+
+    const size = new THREE.Vector3()
+    bbox.getSize(size)
+    const maxDim = Math.max(size.x, size.y, size.z)
+    const distance = maxDim * 2.5
+
+    switch (view) {
+        case 'top':
+            // Looking down from above (Y+)
+            camera.position.set(center.x, center.y, center.z + distance)
+            camera.up.set(0, 1, 0)
+            break
+        case 'bottom':
+            // Looking up from below (Y-)
+            camera.position.set(center.x, center.y, center.z - distance)
+            camera.up.set(0, 1, 0)
+            break
+        case 'front':
+            // Looking from front (Z+)
+            camera.position.set(center.x, center.y + distance, center.z)
+            camera.up.set(0, 0, -1)
+            break
+        case 'back':
+            // Looking from back (Z-)
+            camera.position.set(center.x, center.y - distance, center.z)
+            camera.up.set(0, 0, -1)
+            break
+        case 'left':
+            // Looking from left side (X+) - swapped
+            camera.position.set(center.x + distance, center.y, center.z)
+            camera.up.set(0, 0, -1)
+            break
+        case 'right':
+            // Looking from right side (X-) - swapped
+            camera.position.set(center.x - distance, center.y, center.z)
+            camera.up.set(0, 0, -1)
+            break
+    }
+
+    camera.lookAt(center)
+    controls.target.copy(center)
+    controls.update()
+
+    console.log(`Camera view set to: ${view}`)
+}
+
+// ============ File Input ============
 const fileInput = document.getElementById('fileInput') as HTMLInputElement
 fileInput.addEventListener('change', async (event) => {
     const file = (event.target as HTMLInputElement).files?.[0]
@@ -126,58 +184,142 @@ fileInput.addEventListener('change', async (event) => {
     } else {
         alert('Please select an STL file')
     }
-
-    //reset the input
     fileInput.value = ''
 })
 
+// ============ Hide All Button ============
+const hideAllBtn = document.getElementById('hideAllBtn')
+let allHidden = false
 
-//clear button handler
-const clearBtn = document.getElementById('clearBtn')
-clearBtn?.addEventListener('click', () => {
-    meshManager.clearAll()
+hideAllBtn?.addEventListener('click', () => {
+    const meshes = meshManager.getMeshes()
+    allHidden = !allHidden
+
+    meshes.forEach(mesh => {
+        // Find the checkbox for this mesh and toggle it
+        const meshElement = document.getElementById(mesh.id)
+        if (meshElement) {
+            const checkbox = meshElement.querySelector('.mesh-checkbox') as HTMLInputElement
+            if (checkbox) {
+                checkbox.checked = !allHidden
+                // Manually set visibility without triggering event
+                mesh.mesh.visible = !allHidden
+                mesh.visible = !allHidden
+            }
+        }
+    })
+
+    // Update button text
+    hideAllBtn.textContent = allHidden ? 'Show All' : 'Hide All'
+})
+
+// ============ Close Button ============
+const closeBtn = document.getElementById('closeBtn')
+closeBtn?.addEventListener('click', () => {
+    if (confirm('Are you sure you want to close DentalGeom?')) {
+        window.close()
+    }
+})
+
+// ============ Settings Button ============
+const settingsBtn = document.getElementById('settingsBtn')
+const settingsModal = document.getElementById('settingsModal')!
+const settingsOverlay = document.getElementById('settingsOverlay')!
+const settingsClose = document.getElementById('settingsClose')!
+
+settingsBtn?.addEventListener('click', () => {
+    settingsModal.style.display = 'block'
+    settingsOverlay.style.display = 'block'
+})
+
+settingsClose.addEventListener('click', () => {
+    settingsModal.style.display = 'none'
+    settingsOverlay.style.display = 'none'
+})
+
+settingsOverlay.addEventListener('click', () => {
+    settingsModal.style.display = 'none'
+    settingsOverlay.style.display = 'none'
+})
+
+// ============ Mesh Section Collapse ============
+const meshSectionHeader = document.getElementById('meshSectionHeader')
+meshSectionHeader?.addEventListener('click', () => {
+    meshSectionHeader.classList.toggle('collapsed')
+    meshListElement.classList.toggle('collapsed')
+})
+// Flat Shading
+const flatShadingToggle = document.getElementById('flatShadingToggle') as HTMLInputElement
+
+flatShadingToggle.addEventListener('change', (event) => {
+    const enabled = (event.target as HTMLInputElement).checked
+
+    // Apply to all meshes
+    meshManager.getMeshes().forEach(dentalMesh => {
+        const material = dentalMesh.mesh.material as THREE.MeshStandardMaterial
+        material.flatShading = enabled
+        material.needsUpdate = true
+
+        // Recompute normals
+        const geometry = dentalMesh.mesh.geometry as THREE.BufferGeometry
+        if (enabled) {
+            geometry.computeVertexNormals()
+        } else {
+            geometry.computeVertexNormals()
+        }
+    })
+
+    console.log(`Flat shading: ${enabled}`)
+})
+
+//Glossy Texture
+const glossyTextureToggle = document.getElementById('glossyTextureToggle') as HTMLInputElement
+
+glossyTextureToggle.addEventListener('change', (event) => {
+    const enabled = (event.target as HTMLInputElement).checked
+
+    // Apply to all meshes
+    meshManager.getMeshes().forEach(dentalMesh => {
+        const material = dentalMesh.mesh.material as THREE.MeshStandardMaterial
+        if (enabled) {
+            material.roughness = 0.2  // Glossy
+            material.metalness = 0.1
+        } else {
+            material.roughness = 0.4  // Matte
+            material.metalness = 0.0
+        }
+        material.needsUpdate = true
+    })
+
+    console.log(`Glossy texture: ${enabled}`)
 })
 
 
-//Cross-Section Toggle
+
+// ============ Cross-Section ============
+const settingsCrossSectionToggle = document.getElementById('settingsCrossSectionToggle') as HTMLInputElement
 const crossSectionToggle = document.getElementById('crossSectionToggle') as HTMLInputElement
 const crossSectionSlider = document.getElementById('crossSectionSlider') as HTMLInputElement
-const crossSectionAxis = document.getElementById('crossSectionAxis') as HTMLSelectElement
 const crossSectionValue = document.getElementById('crossSectionValue') as HTMLSpanElement
 const setPlaneBtn = document.getElementById('setPlaneBtn') as HTMLButtonElement
 const crossSectionStatus = document.getElementById('crossSectionStatus') as HTMLSpanElement
 
-crossSectionToggle.addEventListener('change', (event) => {
+// Sync settings panel cross-section toggle with sidebar
+settingsCrossSectionToggle.addEventListener('change', (event) => {
     const enabled = (event.target as HTMLInputElement).checked
-    crossSection.setEnabled(enabled)
+    crossSectionToggle.checked = enabled
+    crossSectionToggle.dispatchEvent(new Event('change'))
+})
 
-    if (crossSection.isEnabled()) {
-        const meshes = meshManager.getMeshes().map(dm => dm.mesh)
-        crossSection.render(meshes)
-    }
-
-    //update ui
-    setPlaneBtn.disabled = !enabled
-    crossSectionSlider.disabled = !enabled
-    crossSectionAxis.disabled = !enabled
+// Sync sidebar cross-section toggle with settings panel
+crossSectionToggle.addEventListener('change', () => {
+    settingsCrossSectionToggle.checked = crossSectionToggle.checked
 })
 
 crossSectionSlider.addEventListener('input', (event) => {
     const value = parseFloat((event.target as HTMLInputElement).value)
     crossSection.setPosition(value)
     crossSectionValue.textContent = value.toFixed(1)
-
-    if (crossSection.isEnabled()) {
-        const meshes = meshManager.getMeshes().map(dm => dm.mesh)
-        crossSection.render(meshes)
-    }
-})
-
-crossSectionAxis.addEventListener('change', (event) => {
-    const axis = (event.target as HTMLInputElement).value as 'x' | 'y' | 'z'
-    crossSection.setAxis(axis)
-    crossSectionSlider.value = '0'
-    crossSectionValue.textContent = '0.0'
 
     if (crossSection.isEnabled()) {
         const meshes = meshManager.getMeshes().map(dm => dm.mesh)
@@ -192,23 +334,29 @@ setPlaneBtn.addEventListener('click', () => {
     crossSectionStatus.style.display = 'block'
 })
 
-//Measurement Tool toggle
+// ============ Measurement Tool ============
+const settingsMeasurementToggle = document.getElementById('settingsMeasurementToggle') as HTMLInputElement
 const measurementToggle = document.getElementById('measurementToggle') as HTMLInputElement
-const clearMeasurementBtn = document.getElementById('clearMeasurementBtn')!
+const clearMeasurementBtn = document.getElementById('clearMeasurement')!
 
-measurementToggle.addEventListener('change', (event) => {
+
+// Sync settings panel measurement toggle with sidebar
+settingsMeasurementToggle.addEventListener('change', (event) => {
     const enabled = (event.target as HTMLInputElement).checked
-    measurementTool.setEnabled(enabled)
+    measurementToggle.checked = enabled
+    measurementToggle.dispatchEvent(new Event('change'))
+})
 
-    //Disable orbit controls when measuring
-    controls.enabled = !enabled
+// Sync sidebar measurement toggle with settings panel
+measurementToggle.addEventListener('change', () => {
+    settingsMeasurementToggle.checked = measurementToggle.checked
 })
 
 clearMeasurementBtn.addEventListener('click', () => {
     measurementTool.clear()
 })
 
-//Click handler for measurements and cross-section
+// ============ Click Handler ============
 renderer.domElement.addEventListener('click', (event) => {
     const meshes = meshManager.getMeshes().map(dm => dm.mesh)
 
@@ -216,7 +364,6 @@ renderer.domElement.addEventListener('click', (event) => {
         const prevCount = crossSection.getPointCount()
         crossSection.handleClick(event, meshes)
 
-        //update status
         const pointCount = crossSection.getPointCount()
         if (pointCount === 0) {
             crossSectionStatus.textContent = 'Click 2 points on mesh to set plane'
@@ -232,19 +379,22 @@ renderer.domElement.addEventListener('click', (event) => {
     }
 })
 
-// Animation loop
+// ============ Animation Loop ============
 function animate() {
     requestAnimationFrame(animate)
     controls.update()
-
-    renderer.render(scene,camera)
+    renderer.render(scene, camera)
 }
-//handle window resize
+
+// ============ Window Resize ============
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight
+    const distance = camera.position.distanceTo(controls.target)
+    camera.left = -distance
+    camera.right = distance
+    camera.top = distance
+    camera.bottom = -distance
     camera.updateProjectionMatrix()
     renderer.setSize(window.innerWidth, window.innerHeight)
 })
-
 
 animate()
