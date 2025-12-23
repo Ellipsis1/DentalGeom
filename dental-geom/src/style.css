@@ -870,3 +870,54 @@ input[type="file"] {
     background: #2a2a4a;
     color: white;
 }
+
+/* 2D Cross-Section Window Styles */
+.cross-section-2d-window {
+    position: fixed;
+    bottom: 20px;
+    left: 320px;
+    width: 400px;
+    height: 400px;
+    background: rgba(250, 250, 250, 0.98);
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-window-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #e8e8e8;
+    border-bottom: 2px solid #ccc;
+    border-radius: 6px 6px 0 0;
+}
+
+.section-window-header span {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+}
+
+.close-window-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+}
+
+.close-window-btn:hover {
+    color: #ff4444;
+}
+
+.section-window-canvas {
+    flex: 1;
+    background: #fafafa;
+    border-radius: 0 0 6px 6px;
+    overflow: hidden;
+}

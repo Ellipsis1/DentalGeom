@@ -103,27 +103,8 @@ export class MeshManager {
         }
     }
 
-
-    public clearAll(): void {
-        //remove all meshes
-        this.meshes.forEach(dentalMesh => {
-            this.scene.remove(dentalMesh.mesh)
-            dentalMesh.dispose()
-        })
-
-        //clear arrays and UI
-        this.meshes = []
-        this.meshListElement.innerHTML = ''
-
-        console.log('All meshes cleared.')
-    }
-
     public getMeshes(): DentalMesh[] {
         return this.meshes
-    }
-
-    public getMeshCount(): number {
-        return this.meshes.length
     }
 
     //calc bounding box for all meshes

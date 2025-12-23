@@ -34,18 +34,31 @@
 
         <div class="slider-control">
             <label>
-                Position: <span id="crossSectionValue">0.0</span>
+                Position: <span id="crossSectionValue">0.0</span> mm
             </label>
             <input
                     type="range"
                     id="crossSectionSlider"
-                    min="-100"
-                    max="100"
+                    min="-50"
+                    max="50"
                     value="0"
                     step="0.1"
                     disabled
             />
         </div>
+
+        <!-- NEW: Clipping controls -->
+        <div class="toggle-control">
+            <input type="checkbox" id="enableClipping" disabled />
+            <label for="enableClipping">Enable Clipping Plane</label>
+        </div>
+
+        <div class="toggle-control">
+            <input type="checkbox" id="invertClipping" disabled />
+            <label for="invertClipping">Invert Clipping</label>
+        </div>
+
+        <button id="clearCrossSection" class="small-btn">Clear</button>
     </div>
 
     <!-- Measurement Tool -->
@@ -58,6 +71,18 @@
         <button id="clearMeasurement" class="small-btn">Clear Measurements</button>
         <p class="tool-hint">Click two points on the mesh to measure distance</p>
     </div>
+
+    <!-- 2D Cross-Section Window -->
+    <div id="crossSection2DWindow" class="cross-section-2d-window" style="display: none;">
+        <div class="section-window-header">
+            <span>2D Cross Section</span>
+            <button class="close-window-btn" id="closeCrossSection2D">×</button>
+        </div>
+        <div id="crossSection2DCanvas" class="section-window-canvas">
+            <!-- Canvas will be inserted here -->
+        </div>
+    </div>
+
 </div>
 
 <!-- Settings Modal (hidden by default) -->
@@ -69,18 +94,7 @@
     </div>
 
     <div class="settings-section">
-        <h3>Camera</h3>
-        <div class="settings-option">
-            <label for="cameraProjection">Projection</label>
-            <select id="cameraProjection">
-                <option value="perspective">Perspective</option>
-                <option value="orthographic">Orthographic</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="settings-section">
-        <h3>Display</h3>
+        <h3>Display Options</h3>
         <div class="settings-option">
             <label for="flatShadingToggle">Flat Shading</label>
             <input type="checkbox" id="flatShadingToggle" />
@@ -91,17 +105,6 @@
         </div>
     </div>
 
-    <div class="settings-section">
-        <h3>Tools</h3>
-        <div class="settings-option">
-            <label for="settingsMeasurementToggle">Measurement Tool</label>
-            <input type="checkbox" id="settingsMeasurementToggle" />
-        </div>
-        <div class="settings-option">
-            <label for="settingsCrossSectionToggle">Cross-Section</label>
-            <input type="checkbox" id="settingsCrossSectionToggle" />
-        </div>
-    </div>
 </div>
 
 <!-- Right Side Circular Buttons -->

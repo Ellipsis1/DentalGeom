@@ -2,25 +2,28 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from "three-stdlib";
 import { MeshManager } from "./MeshManager";
-import { CrossSection } from "./CrossSection";
-import { MeasurementTool } from "./MeasurementTool";
+// import { CrossSectionTool } from "./CrossSectionTool";
+// import { CrossSectionView } from "./CrossSectionView";
+// import { MeasurementTool } from "./MeasurementTool";
 
 //Scene setup
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x4a4a7a)
 
+const cameraAspect = window.innerWidth / window.innerHeight
+const frustumSize = 100
 //Camera
 const camera = new THREE.OrthographicCamera(
-    window.innerWidth / -2,
-    window.innerWidth / 2,
-    window.innerHeight / 2,
-    window.innerHeight / -2,
+    frustumSize * cameraAspect / -2,
+    frustumSize * cameraAspect / 2,
+    frustumSize / 2,
+    frustumSize / -2,
     0.1,
     1000
 )
 
-camera.position.set(50, 50, 50)
-camera.lookAt(0, 0, 0)
+camera.position.set(20, 20, 20)
+camera.lookAt(0, 0, -1)
 
 //Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -64,11 +67,16 @@ scene.add(hemiLight)
 const meshListElement = document.getElementById('meshList')!
 const meshManager = new MeshManager(scene, meshListElement)
 
-//CrossSection Tool
-const crossSection = new CrossSection(scene, camera, renderer.domElement)
-
-//Measurement Tool
-const measurementTool = new MeasurementTool(scene, camera, renderer.domElement)
+// //CrossSection Tool
+// const crossSectionTool = new CrossSectionTool(
+//     scene,
+//     renderer,
+//     camera,
+//     renderer.domElement
+// )
+//
+// //Measurement Tool
+// const measurementTool = new MeasurementTool(scene, camera, renderer.domElement)
 
 // Camera centering function
 function centerCameraOnMeshes(): void {
@@ -84,8 +92,7 @@ function centerCameraOnMeshes(): void {
 
     // Calculate the distance needed to fit the object in view
     const maxDim = Math.max(size.x, size.y, size.z)
-    const fov = 400 * (Math.PI / 180)
-    let cameraDistance = Math.abs(maxDim / Math.sin(fov / 2))
+    let cameraDistance = Math.abs(maxDim)
 
     // Set to front view (looking from above) as default
     camera.position.set(center.x, center.y + cameraDistance, center.z)
@@ -127,8 +134,7 @@ function setCameraView(view: string): void {
 
     const size = new THREE.Vector3()
     bbox.getSize(size)
-    const maxDim = Math.max(size.x, size.y, size.z)
-    const distance = maxDim * 2.5
+    const distance = Math.max(size.x, size.y, size.z)
 
     switch (view) {
         case 'top':
@@ -292,91 +298,6 @@ glossyTextureToggle.addEventListener('change', (event) => {
     })
 
     console.log(`Glossy texture: ${enabled}`)
-})
-
-
-
-// ============ Cross-Section ============
-const settingsCrossSectionToggle = document.getElementById('settingsCrossSectionToggle') as HTMLInputElement
-const crossSectionToggle = document.getElementById('crossSectionToggle') as HTMLInputElement
-const crossSectionSlider = document.getElementById('crossSectionSlider') as HTMLInputElement
-const crossSectionValue = document.getElementById('crossSectionValue') as HTMLSpanElement
-const setPlaneBtn = document.getElementById('setPlaneBtn') as HTMLButtonElement
-const crossSectionStatus = document.getElementById('crossSectionStatus') as HTMLSpanElement
-
-// Sync settings panel cross-section toggle with sidebar
-settingsCrossSectionToggle.addEventListener('change', (event) => {
-    const enabled = (event.target as HTMLInputElement).checked
-    crossSectionToggle.checked = enabled
-    crossSectionToggle.dispatchEvent(new Event('change'))
-})
-
-// Sync sidebar cross-section toggle with settings panel
-crossSectionToggle.addEventListener('change', () => {
-    settingsCrossSectionToggle.checked = crossSectionToggle.checked
-})
-
-crossSectionSlider.addEventListener('input', (event) => {
-    const value = parseFloat((event.target as HTMLInputElement).value)
-    crossSection.setPosition(value)
-    crossSectionValue.textContent = value.toFixed(1)
-
-    if (crossSection.isEnabled()) {
-        const meshes = meshManager.getMeshes().map(dm => dm.mesh)
-        crossSection.render(meshes)
-    }
-})
-
-setPlaneBtn.addEventListener('click', () => {
-    crossSection.setSettingMode(true)
-    controls.enabled = false
-    crossSectionStatus.textContent = 'Click 2 points on mesh to set plane'
-    crossSectionStatus.style.display = 'block'
-})
-
-// ============ Measurement Tool ============
-const settingsMeasurementToggle = document.getElementById('settingsMeasurementToggle') as HTMLInputElement
-const measurementToggle = document.getElementById('measurementToggle') as HTMLInputElement
-const clearMeasurementBtn = document.getElementById('clearMeasurement')!
-
-
-// Sync settings panel measurement toggle with sidebar
-settingsMeasurementToggle.addEventListener('change', (event) => {
-    const enabled = (event.target as HTMLInputElement).checked
-    measurementToggle.checked = enabled
-    measurementToggle.dispatchEvent(new Event('change'))
-})
-
-// Sync sidebar measurement toggle with settings panel
-measurementToggle.addEventListener('change', () => {
-    settingsMeasurementToggle.checked = measurementToggle.checked
-})
-
-clearMeasurementBtn.addEventListener('click', () => {
-    measurementTool.clear()
-})
-
-// ============ Click Handler ============
-renderer.domElement.addEventListener('click', (event) => {
-    const meshes = meshManager.getMeshes().map(dm => dm.mesh)
-
-    if (crossSection.isSettingMode()) {
-        const prevCount = crossSection.getPointCount()
-        crossSection.handleClick(event, meshes)
-
-        const pointCount = crossSection.getPointCount()
-        if (pointCount === 0) {
-            crossSectionStatus.textContent = 'Click 2 points on mesh to set plane'
-        } else if (pointCount === 1) {
-            crossSectionStatus.textContent = 'Click 1 more point'
-        } else if (pointCount === 2 && prevCount === 1) {
-            crossSection.render(meshes)
-            crossSectionStatus.style.display = 'none'
-            controls.enabled = true
-        }
-    } else if (measurementTool.isEnabled()) {
-        measurementTool.handleClick(event, meshes)
-    }
 })
 
 // ============ Animation Loop ============
