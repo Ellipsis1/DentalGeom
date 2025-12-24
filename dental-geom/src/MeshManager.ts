@@ -9,9 +9,6 @@ export class MeshManager {
     private meshListElement: HTMLElement
     private onMeshLoadedCallback?: () => void
 
-    //Color for all meshes - Grey
-    private readonly defaultColor = 0x808080
-
     constructor(
         scene: THREE.Scene,
         meshListElement: HTMLElement,
@@ -35,7 +32,7 @@ export class MeshManager {
                     const geometry = this.loader.parse(arrayBuffer)
 
                     //create mesh
-                    const dentalMesh = new DentalMesh(geometry, file.name, this.defaultColor)
+                    const dentalMesh = new DentalMesh(geometry, file.name)
 
                     //add to scene
                     this.scene.add(dentalMesh.mesh)

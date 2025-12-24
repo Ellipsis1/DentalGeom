@@ -1,5 +1,16 @@
 import * as THREE from 'three'
 
+const MESH_COLORS = [
+    0xf5e6d3,  // Cream
+    0x4ecdc4,  // Teal
+    0xff6b6b,  // Red
+    0xffe66d,  // Yellow
+    0x95e1d3,  // Mint
+    0xc7b8ea,  // Purple
+]
+
+let colorIndex = 0
+
 export class DentalMesh {
     public mesh: THREE.Mesh
     public filename: string
@@ -12,16 +23,23 @@ export class DentalMesh {
     constructor(
         geometry: THREE.BufferGeometry,
         filename: string,
-        color: number
+        color?: number
     ) {
         this.filename = filename
-        this.color = color
+
+        if (color == undefined) {
+            this.color = MESH_COLORS[colorIndex]
+            colorIndex = (colorIndex + 1) % MESH_COLORS.length
+        } else {
+            this.color = color
+        }
+
         this.opacity = 1.0
         this.id = `mesh-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
         // Create material
         const material = new THREE.MeshStandardMaterial({
-            color: 0xf5e6d3,
+            color: this.color,
             roughness: 0.4,
             metalness: 0.0,
             flatShading: false,

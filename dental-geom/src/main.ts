@@ -55,12 +55,12 @@ fillLight.position.set(-50, 50, -50)
 scene.add(fillLight)
 
 // Rim light
-const rimLight = new THREE.DirectionalLight(0xffffff, 0.5)
+const rimLight = new THREE.DirectionalLight(0xffffff, 0.7)
 rimLight.position.set(0, 50, -100)
 scene.add(rimLight)
 
 // Hemisphere light
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.3)
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5)
 scene.add(hemiLight)
 
 //Mesh Manager
@@ -136,44 +136,72 @@ function setCameraView(view: string): void {
     bbox.getSize(size)
     const distance = Math.max(size.x, size.y, size.z)
 
+    let targetPosition = new THREE.Vector3()
+    let targetUp = new THREE.Vector3()
+
     switch (view) {
         case 'top':
-            // Looking down from above (Y+)
-            camera.position.set(center.x, center.y, center.z + distance)
-            camera.up.set(0, 1, 0)
+            // Looking down from above (Z+)
+            targetPosition.set(center.x, center.y, center.z + distance)
+            targetUp.set(0, 1, 0)
             break
         case 'bottom':
-            // Looking up from below (Y-)
-            camera.position.set(center.x, center.y, center.z - distance)
-            camera.up.set(0, 1, 0)
+            // Looking up from below (Z-)
+            targetPosition.set(center.x, center.y, center.z - distance)
+            targetUp.set(0, 1, 0)
             break
         case 'front':
-            // Looking from front (Z+)
-            camera.position.set(center.x, center.y + distance, center.z)
-            camera.up.set(0, 0, -1)
+            // Looking from front (Y+)
+            targetPosition.set(center.x, center.y + distance, center.z)
+            targetUp.set(0, 0, -1)
             break
         case 'back':
-            // Looking from back (Z-)
-            camera.position.set(center.x, center.y - distance, center.z)
-            camera.up.set(0, 0, -1)
+            // Looking from back (Y-)
+            targetPosition.set(center.x, center.y - distance, center.z)
+            targetUp.set(0, 0, -1)
             break
         case 'left':
             // Looking from left side (X+) - swapped
-            camera.position.set(center.x + distance, center.y, center.z)
-            camera.up.set(0, 0, -1)
+            targetPosition.set(center.x + distance, center.y, center.z)
+            targetUp.set(0, 0, -1)
             break
         case 'right':
             // Looking from right side (X-) - swapped
-            camera.position.set(center.x - distance, center.y, center.z)
-            camera.up.set(0, 0, -1)
+            targetPosition.set(center.x - distance, center.y, center.z)
+            targetUp.set(0, 0, -1)
             break
     }
 
-    camera.lookAt(center)
-    controls.target.copy(center)
-    controls.update()
+    const startPosition = camera.position.clone()
+    const startUp = camera.up.clone()
+    const startTarget = controls.target.clone()
 
-    console.log(`Camera view set to: ${view}`)
+    let progress = 0
+    const duration = 1000 // milliseconds
+    const startTime = Date.now()
+
+    function animateMovement() {
+        const elapsedTime = Date.now() - startTime
+        progress = Math.min(elapsedTime / duration, 1)
+
+        const easein_out = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress +2,2) /2
+
+        // Lerp position
+        camera.position.lerpVectors(startPosition, targetPosition, easein_out)
+        camera.up.lerpVectors(startUp, targetUp, easein_out)
+        controls.target.lerpVectors(startTarget, center, easein_out)
+
+        camera.lookAt(controls.target)
+        controls.update()
+
+        if (progress < 1) {
+            requestAnimationFrame(animateMovement)
+        }
+    }
+
+    animateMovement()
 }
 
 // ============ File Input ============
