@@ -1,16 +1,5 @@
 import * as THREE from 'three'
 
-const MESH_COLORS = [
-    0xf5e6d3,  // Cream
-    0x4ecdc4,  // Teal
-    0xff6b6b,  // Red
-    0xffe66d,  // Yellow
-    0x95e1d3,  // Mint
-    0xc7b8ea,  // Purple
-]
-
-let colorIndex = 0
-
 export class DentalMesh {
     public mesh: THREE.Mesh
     public filename: string
@@ -23,17 +12,10 @@ export class DentalMesh {
     constructor(
         geometry: THREE.BufferGeometry,
         filename: string,
-        color?: number
+        color: number
     ) {
         this.filename = filename
-
-        if (color == undefined) {
-            this.color = MESH_COLORS[colorIndex]
-            colorIndex = (colorIndex + 1) % MESH_COLORS.length
-        } else {
-            this.color = color
-        }
-
+        this.color = color
         this.opacity = 1.0
         this.id = `mesh-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -60,7 +42,7 @@ export class DentalMesh {
 
     public setOpacity(value: number): void {
         this.opacity = value
-        const material = this.mesh.material as THREE.MeshPhongMaterial
+        const material = this.mesh.material as THREE.MeshStandardMaterial
         material.opacity = value
     }
 
@@ -70,8 +52,8 @@ export class DentalMesh {
 
         // Update checkbox if control element exists
         if (this.controlElement) {
-            const checkbox = this.controlElement.querySelector('.mesh-checkbox') as HTMLInputElement
-            if (checkbox) {
+            const checkbox = this.controlElement.querySelector('.mesh-checkbox')
+            if (checkbox instanceof HTMLInputElement) {
                 checkbox.checked = visible
             }
         }
@@ -79,7 +61,7 @@ export class DentalMesh {
 
     public dispose(): void {
         this.mesh.geometry.dispose()
-        const material = this.mesh.material as THREE.MeshPhongMaterial
+        const material = this.mesh.material as THREE.MeshStandardMaterial
         material.dispose()
     }
 
@@ -121,36 +103,48 @@ export class DentalMesh {
         `
 
         // Add event listeners
-        const checkbox = controlDiv.querySelector('.mesh-checkbox') as HTMLInputElement
-        const removeBtn = controlDiv.querySelector('.mesh-remove-btn') as HTMLButtonElement
-        const slider = controlDiv.querySelector('.mesh-opacity-slider') as HTMLInputElement
-        const opacityLabel = controlDiv.querySelector('.opacity-percent') as HTMLSpanElement
+        const checkbox = controlDiv.querySelector('.mesh-checkbox')
+        const removeBtn = controlDiv.querySelector('.mesh-remove-btn')
+        const slider = controlDiv.querySelector('.mesh-opacity-slider')
+        const opacityLabel = controlDiv.querySelector('.opacity-percent')
 
         // Checkbox visibility toggle - acts like individual Hide/Show button
-        checkbox.addEventListener('change', (event) => {
-            const isChecked = (event.target as HTMLInputElement).checked
+        if (checkbox instanceof HTMLInputElement) {
+            checkbox.addEventListener('change', (event) => {
+                const target = event.target
+                if (!(target instanceof HTMLInputElement)) return
 
-            // Update mesh visibility based on checkbox state
-            this.mesh.visible = isChecked
-            this.visible = isChecked
+                const isChecked = target.checked
 
-            onVisibilityChange(isChecked)
-        })
+                // Update mesh visibility based on checkbox state
+                this.mesh.visible = isChecked
+                this.visible = isChecked
+
+                onVisibilityChange(isChecked)
+            })
+        }
 
         // Opacity slider
-        slider.addEventListener('input', (event) => {
-            const value = parseInt((event.target as HTMLInputElement).value)
-            this.setOpacity(value / 100)
-            opacityLabel.textContent = `${value}%`
-            onOpacityChange(value)
-        })
+        if (slider instanceof HTMLInputElement && opacityLabel) {
+            slider.addEventListener('input', (event) => {
+                const target = event.target
+                if (!(target instanceof HTMLInputElement)) return
+
+                const value = parseInt(target.value)
+                this.setOpacity(value / 100)
+                opacityLabel.textContent = `${value}%`
+                onOpacityChange(value)
+            })
+        }
 
         // Remove button - actually delete the mesh
-        removeBtn.addEventListener('click', (event) => {
-            event.stopPropagation()
-            event.preventDefault()
-            onRemove()
-        })
+        if (removeBtn instanceof HTMLButtonElement) {
+            removeBtn.addEventListener('click', (event) => {
+                event.stopPropagation()
+                event.preventDefault()
+                onRemove()
+            })
+        }
 
         this.controlElement = controlDiv
         return controlDiv
@@ -159,11 +153,15 @@ export class DentalMesh {
     public updateControlOpacity(): void {
         if (!this.controlElement) return
 
-        const slider = this.controlElement.querySelector('.mesh-opacity-slider') as HTMLInputElement
-        const opacityLabel = this.controlElement.querySelector('.opacity-percent') as HTMLSpanElement
+        const slider = this.controlElement.querySelector('.mesh-opacity-slider')
+        const opacityLabel = this.controlElement.querySelector('.opacity-percent')
         const opacityPercent = Math.round(this.opacity * 100)
 
-        if (slider) slider.value = opacityPercent.toString()
-        if (opacityLabel) opacityLabel.textContent = `${opacityPercent}%`
+        if (slider instanceof HTMLInputElement) {
+            slider.value = opacityPercent.toString()
+        }
+        if (opacityLabel) {
+            opacityLabel.textContent = `${opacityPercent}%`
+        }
     }
 }

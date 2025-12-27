@@ -5,7 +5,6 @@ A 3D dental mesh viewer and crown restoration generator built with Three.js and 
 ## Features
 - STL file loading and visualization
 - Interactive 3D controls
-- Mesh analysis and statistics
 
 ## Tech Stack
 - Three.js / WebGL

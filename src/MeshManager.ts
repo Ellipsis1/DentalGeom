@@ -1,6 +1,7 @@
 import * as THREE from 'three'
-import { STLLoader} from "three-stdlib";
-import { DentalMesh } from "./DentalMesh";
+import { STLLoader } from "three-stdlib"
+import { DentalMesh } from "./DentalMesh"
+import { MESH_COLORS} from "./Constants.ts";
 
 export class MeshManager {
     private meshes: DentalMesh[] = []
@@ -8,6 +9,7 @@ export class MeshManager {
     private loader: STLLoader
     private meshListElement: HTMLElement
     private onMeshLoadedCallback?: () => void
+    private colorIndex: number = 0
 
     constructor(
         scene: THREE.Scene,
@@ -18,12 +20,21 @@ export class MeshManager {
         this.loader = new STLLoader()
     }
 
-    public setOnMeshLoaded(callback: () => void) {
+    public setOnMeshLoaded(callback: () => void): void {
         this.onMeshLoadedCallback = callback
     }
 
-    public async loadSTL(file: File): Promise<void>{
-        return new Promise((resolve, reject)=> {
+    /**
+     * Gets the next color in the rotation sequence
+     */
+    private getNextColor(): number {
+        const color = MESH_COLORS[this.colorIndex]
+        this.colorIndex = (this.colorIndex + 1) % MESH_COLORS.length
+        return color
+    }
+
+    public async loadSTL(file: File): Promise<void> {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader()
 
             reader.onload = (event) => {
@@ -31,17 +42,20 @@ export class MeshManager {
                     const arrayBuffer = event.target?.result as ArrayBuffer
                     const geometry = this.loader.parse(arrayBuffer)
 
-                    //create mesh
-                    const dentalMesh = new DentalMesh(geometry, file.name)
+                    // Get next color from rotation
+                    const color = this.getNextColor()
 
-                    //add to scene
+                    // Create mesh with assigned color
+                    const dentalMesh = new DentalMesh(geometry, file.name, color)
+
+                    // Add to scene
                     this.scene.add(dentalMesh.mesh)
 
-                    //update ui
+                    // Update UI
                     this.meshes.push(dentalMesh)
                     this.addMeshControl(dentalMesh)
 
-                    //notify callback
+                    // Notify callback
                     if (this.onMeshLoadedCallback) {
                         this.onMeshLoadedCallback()
                     }
@@ -60,7 +74,7 @@ export class MeshManager {
         })
     }
 
-    private addMeshControl (dentalMesh: DentalMesh): void {
+    private addMeshControl(dentalMesh: DentalMesh): void {
         const controlElement = dentalMesh.createControlElement(
             (value) => {
                 // Callback 1: opacity changed
@@ -84,16 +98,16 @@ export class MeshManager {
         const index = this.meshes.indexOf(dentalMesh)
         if (index === -1) return
 
-        //remove mesh from scene
+        // Remove mesh from scene
         this.scene.remove(dentalMesh.mesh)
 
-        //dispose resources
+        // Dispose resources
         dentalMesh.dispose()
 
-        //remove from mesh array
+        // Remove from mesh array
         this.meshes.splice(index, 1)
 
-        //remove control element
+        // Remove control element
         const controlElement = document.getElementById(dentalMesh.id)
         if (controlElement) {
             controlElement.remove()
@@ -104,7 +118,10 @@ export class MeshManager {
         return this.meshes
     }
 
-    //calc bounding box for all meshes
+    /**
+     * Calculates the combined bounding box of all loaded meshes
+     * @returns A Box3 containing all meshes, or an empty Box3 if no meshes are loaded
+     */
     public getBoundingBox(): THREE.Box3 {
         const box = new THREE.Box3()
         this.meshes.forEach(dentalMesh => {
@@ -112,5 +129,33 @@ export class MeshManager {
             box.union(meshBox)
         })
         return box
+    }
+
+    /**
+     * Sets visibility for all meshes and updates their UI controls
+     * @param visible - Whether meshes should be visible
+     */
+    public setAllVisible(visible: boolean): void {
+        this.meshes.forEach(mesh => {
+            mesh.setVisible(visible)
+        })
+    }
+
+    /**
+     * Disposes all meshes and clears the manager
+     * Used for cleanup when closing the application
+     */
+    public disposeAll(): void {
+        // Work backwards to avoid index issues during removal
+        for (let i = this.meshes.length - 1; i >= 0; i--) {
+            this.removeMesh(this.meshes[i])
+        }
+    }
+
+    /**
+     * Resets the color rotation back to the first color
+     */
+    public resetColorRotation(): void {
+        this.colorIndex = 0
     }
 }
